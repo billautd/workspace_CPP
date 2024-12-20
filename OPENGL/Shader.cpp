@@ -1,5 +1,5 @@
 #include "Shader.h"
-#include "Logger.hpp"
+#include "Logger.h"
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -16,7 +16,7 @@ void Shader::readFile(std::string path) {
 	std::ifstream fileStream(path, std::ios::in);
 
 	if (!fileStream.is_open()) {
-		Logger::get().error("Cannot open file at " + path);
+		Logger::error("Cannot open file at " + path);
 		return;
 	}
 
@@ -27,7 +27,7 @@ void Shader::readFile(std::string path) {
 	}
 	fileStream.close();
 
-	Logger::get().info("Read file at " + path);
+	Logger::info("Read file at " + path);
 }
 
 int Shader::createShader() {
@@ -53,12 +53,12 @@ int Shader::createShader() {
 	glGetShaderiv(id, GL_COMPILE_STATUS, &result);
 	if (result != GL_TRUE) {
 		glGetShaderInfoLog(id, sizeof(log), NULL, log);
-		Logger::get().error("Error compiling " + typeToString() + " shader : \n" + log);
+		Logger::error("Error compiling " + typeToString() + " shader : \n" + log);
 		return 1;
 	}
 
-	Logger::get().info("Created " + typeToString() + " shader");
-	Logger::get().debug("Content : \n" + content);
+	Logger::info("Created " + typeToString() + " shader");
+	Logger::debug("Content : \n" + content);
 	return 0;
 }
 

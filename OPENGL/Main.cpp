@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 #include <glm.hpp>
@@ -6,66 +7,16 @@
 #include <gtc/type_ptr.hpp>
 
 #include "Constants.h"
-#include "Logger.hpp"
+#include "Logger.h"
 #include "ShaderProgram.h"
+#include "Mesh.h"
+#include "Window.h"
 
-static GLFWwindow* window = nullptr;
 const float toRadians = 3.14159265f / 180.0f;
+std::vector<Mesh*> meshList;
 
-int init() {
-	//Init GLFW
-	const int glfwInitResult = glfwInit();
-	if (glfwInitResult != GLFW_TRUE) {
-		Logger::get().error("Error initializing GLFW");
-		glfwTerminate();
-		return 1;
-	}
-
-	//Setup GLFW properties
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-
-	window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "", NULL, NULL);
-	if (!window) {
-		Logger::get().error("Error initializing GLFW window");
-		glfwTerminate();
-		return 2;
-	}
-
-	//Get buffer size information
-	int bufferWidth = 0;
-	int bufferHeight = 0;
-	glfwGetFramebufferSize(window, &bufferWidth, &bufferHeight);
-
-	//Set context for GLEW
-	glfwMakeContextCurrent(window);
-
-	//Allow modern extension features
-	glewExperimental = GL_TRUE;
-
-	//Init GLEW
-	const int glewInitResult = glewInit();
-	if (glewInitResult != GLEW_OK) {
-		Logger::get().error("Error initializing GLEW : \n");
-		Logger::get().error(glewGetErrorString(glewInitResult));
-		glfwDestroyWindow(window);
-		glfwTerminate();
-		return 3;
-	}
-
-	//Enable depth buffer
-	glEnable(GL_DEPTH_TEST);
-
-	//Setup viewport size
-	glViewport(0, 0, bufferWidth, bufferHeight);
-
-	return 0;
-}
-
-GLuint vao, vbo, ibo;
-const GLuint vertexIndices[] = {
+void createObjects() {
+	const GLuint indices[] = {
 	0,1,4, //Front face
 	1,4,5,
 	0,1,2,//Top face
@@ -78,57 +29,50 @@ const GLuint vertexIndices[] = {
 	2,4,6,
 	1,3,5,//Right face
 	3,5,7
-};
-
-const GLfloat cubeVertices[] = {
-	-1.0f,1.0f,-1.0f,//Top Front Left
-	1.0f,1.0f,-1.0f,//Top Front Right
-	-1.0f,1.0f,1.0f,//Top Back Left
-	1.0f,1.0f,1.0f,//Top Back Right
-	-1.0f,-1.0f,-1.0f,//Bottom Front Left
-	1.0f,-1.0f,-1.0f,//Bottom Front Right
-	-1.0f,-1.0f,1.0f,//Bottom Back Left
-	1.0f,-1.0f,1.0f//Bottom Back Right
-};
+	};
+	const unsigned int indexCount = sizeof(indices) / sizeof(indices[0]);
 
 
-void createCube() {
-	//Create & bind VAO
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	const GLfloat vertices[] = {
+		-1.0f,1.0f,-1.0f,//Top Front Left
+		1.0f,1.0f,-1.0f,//Top Front Right
+		-1.0f,1.0f,1.0f,//Top Back Left
+		1.0f,1.0f,1.0f,//Top Back Right
+		-1.0f,-1.0f,-1.0f,//Bottom Front Left
+		1.0f,-1.0f,-1.0f,//Bottom Front Right
+		-1.0f,-1.0f,1.0f,//Bottom Back Left
+		1.0f,-1.0f,1.0f//Bottom Back Right
+	};
+	const unsigned int vertexCount = sizeof(vertices) / sizeof(vertices[0]);
 
-	//Create & bind IBO
-	glGenBuffers(1, &ibo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vertexIndices), vertexIndices, GL_STATIC_DRAW);
+	Mesh* cube1 = new Mesh(vertices, indices, vertexCount, indexCount);
+	Mesh* cube2 = new Mesh(vertices, indices, vertexCount, indexCount);
 
-	//Create & bind VBO
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
-	//Create pointer
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(0);
-	//Unbind
-	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	meshList.push_back(cube1);
+	meshList.push_back(cube2);
 }
 
-
 int main(int argc, char** argv) {
-	int initResult = init();
+	Window window = Window(1920, 1080);
+	window.init();
 
 	ShaderProgram program = ShaderProgram("shader.vert", "shader.frag");
 	//Create model matrix
 	program.createUniform("model");
+	program.createUniform("projection");
+	program.createUniform("view");
 
-	createCube();
+	//Projection
+	glm::mat4 projection = glm::perspective(45.0f, window.getAspectRatio(), 0.1f, 100.0f);
+	//View
+	glm::mat4 view(1.0f);
+
+	createObjects();
 
 	float angle = 0.0f;
 
 	//Loop until window closed
-	while (!glfwWindowShouldClose(window)) {
+	while (!window.shouldClose()) {
 		//Update offset
 		angle += 0.5f;
 
@@ -140,24 +84,33 @@ int main(int argc, char** argv) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//Draw triangle
-		glUseProgram(program.getId());
+		program.use();
 
+		//Projection
+		glUniformMatrix4fv(program.getUniform(ShaderProgram::PROJECTION_NAME), 1, GL_FALSE, glm::value_ptr(projection));
+		//View
+		glUniformMatrix4fv(program.getUniform(ShaderProgram::VIEW_NAME), 1, GL_FALSE, glm::value_ptr(view));
+
+		//Model
 		glm::mat4 model(1.0f);
+		//Move away cube from us to see after projection
+		model = glm::translate(model, glm::vec3(1.0f, 0.0f, -2.5f));
 		model = glm::rotate(model, angle * toRadians, glm::vec3(0.4f, 1.0f, 0.2f));
-		model = glm::scale(model, glm::vec3(0.4f));
-		glUniformMatrix4fv(program.getUniform("model"), 1, GL_FALSE, glm::value_ptr(model));
+		model = glm::scale(model, glm::vec3(0.5f));
+		glUniformMatrix4fv(program.getUniform(ShaderProgram::MODEL_NAME), 1, GL_FALSE, glm::value_ptr(model));
+		meshList[0]->render();
 
-		glBindVertexArray(vao);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+		model = glm::mat4(1.0f);
+		//Move away cube from us to see after projection
+		model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -2.5f));
+		model = glm::rotate(model, angle * toRadians, glm::vec3(0.4f, 1.0f, 0.2f));
+		model = glm::scale(model, glm::vec3(0.5f));
+		glUniformMatrix4fv(program.getUniform(ShaderProgram::MODEL_NAME), 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->render();
 
-		glDrawElements(GL_TRIANGLES, sizeof(vertexIndices) / sizeof(GLuint), GL_UNSIGNED_INT, 0);
+		program.reset();
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
-
-		glUseProgram(0);
-
-		glfwSwapBuffers(window);
+		window.swapBuffers();
 	}
 
 	return 0;

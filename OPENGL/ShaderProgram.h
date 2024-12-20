@@ -27,6 +27,10 @@ public:
 	ShaderProgram(std::string vertShaderPath, std::string fragShaderPath);
 	~ShaderProgram();
 
+	const static std::string MODEL_NAME;
+	const static std::string PROJECTION_NAME;
+	const static std::string VIEW_NAME;
+
 	GLuint getId() { return id; }
 	Shader& getShader(GLenum type) { return *shaders[type]; }
 	GLint getUniform(std::string name) { return uniforms[name]; }
@@ -37,5 +41,19 @@ public:
 	* Returns id
 	*/
 	GLint createUniform(std::string name);
+
+	/*
+	* Use this program
+	*/
+	void use() { glUseProgram(id); }
+
+	/*
+	* Reset program use
+	*/
+	void reset() { glUseProgram(0); }
+
+
+
+
 };
 

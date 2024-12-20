@@ -22,6 +22,9 @@ public:
 	*/
 	int createShader();
 
+	/*
+	* Returns readable and loggable string for shader type
+	*/
 	std::string typeToString();
 };
 

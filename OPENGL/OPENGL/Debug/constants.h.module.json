@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "OPENGL\\Debug\\Constants.h.obj",
+            "outputs": [
+                "C:\\Users\\dbill\\Documents\\workspace_CPP\\OPENGL\\OPENGL\\Debug\\vc143.pdb",
+                "OPENGL\\Debug\\",
+                "C:\\Users\\dbill\\Documents\\workspace_CPP\\OPENGL\\OPENGL\\Debug\\Constants.h.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "Constants.h",
+                    "source-path": "c:\\users\\dbill\\documents\\workspace_cpp\\opengl\\constants.h",
+                    "lookup-method": "absolute"
+                }
+            ],
+            "requires": []
+        }
+    ]
+}
